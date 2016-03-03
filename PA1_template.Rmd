@@ -29,14 +29,19 @@ str(act)
 ###Calculate the total number of steps taken per day
 We use the `group_by` function to group the data by date.  Then we remove NAs and summarize total steps by day using the `summarize` and `sum` functions.
 ```{R total_steps, echo=TRUE}
-total <- group_by(act,date) %>% na.omit() %>% summarize(total_steps=sum(steps))
+total <- group_by(act,date) %>% 
+        na.omit() %>% 
+        summarize(total_steps=sum(steps))
 head(total)
 ```
 
 ###Make a histogram of the total number of steps taken each day
 We use the `hist` function to create a histogram of the total steps taken each day.
 ```{R histogram, echo=TRUE}
-hist(total$total_steps, main="Total Daily Steps",col="blue",xlab="Number of Steps")
+hist(total$total_steps,
+     main="Total Daily Steps",
+     col="blue",
+     xlab="Number of Steps")
 ```
 
 ###Calculate and report the mean and median of the total number of steps taken per day
@@ -59,13 +64,19 @@ o_med
 
 First, we group the data by interval.  Then we calculate the average steps by interval across all days.
 ```{R interval, echo=TRUE}
-int <- group_by(act,interval) %>% na.omit() %>% summarize(avg_steps = mean(steps))
+int <- group_by(act,interval) %>% 
+        na.omit() %>% 
+        summarize(avg_steps = mean(steps))
 head(int)
 ```
 
 Then we use the `plot` function to create a time series plot of the data.
 ```{R time_series, echo=TRUE}
-plot(int$interval,int$avg_steps,type="l",xlab="Interval",ylab="Number of Steps",main="Average Number of Steps per Day by Interval")
+plot(int$interval,int$avg_steps,
+     type="l",
+     xlab="Interval",
+     ylab="Number of Steps",
+     main="Average Number of Steps per Day by Interval")
 ```
 
 ###Find the 5-minute interval that, on average across all days in the dataset, contains the maximum number of steps
@@ -87,20 +98,26 @@ We will use the average value for the interval to replace any missing values.
 ###Create a new dataset that is equal to the original dataset but with the missing data filled in.
 We will create a new dataset, `act_imp`, which will contain imputed values for any missing data.  We will first join the `int` dataset containing the average steps by interval with the `act` dataset.  Then if a value is missing, we will use `avg_steps` instead.  We then drop `avg_steps` from the dataset. 
 ```{R impute, echo=TRUE}
-act_imp <- left_join(act,int,by="interval") %>% mutate(steps=ifelse(is.na(steps),avg_steps,steps)) %>% select(-avg_steps)
+act_imp <- left_join(act,int,by="interval") %>% 
+        mutate(steps=ifelse(is.na(steps),avg_steps,steps)) %>% 
+        select(-avg_steps)
 head(act_imp)
 ```
 
 ###Make a histogram of the total number of steps taken each day and calculate the mean and median total number of steps taken per day.
 First we need to recalculate the total number of steps per day using our new imputed dataset.  We use the same method we used above.
 ```{R total_steps_imp, echo=TRUE}
-total_imp <- group_by(act_imp,date) %>% summarize(total_steps=sum(steps))
+total_imp <- group_by(act_imp,date) %>% 
+        summarize(total_steps=sum(steps))
 head(total_imp)
 ```
 
 We then create a histogram of the data.
 ```{R histogram_imp, echo=TRUE}
-hist(total_imp$total_steps,main="Total Steps Each Day",col="blue",xlab="Number of Steps")
+hist(total_imp$total_steps,
+     main="Total Steps Each Day",
+     col="blue",
+     xlab="Number of Steps")
 ```
 
 We calculate the mean and the median total number of steps taken per day using the imputed data set.
@@ -137,26 +154,43 @@ We can see that the median differs slightly when calculated using imputed data c
 ### Create a new factor variable in the dataset indicating whether a given date is a weekday or weekend day.
 We use convert the `date` variable to a POSIXlt variable using the `as.Date` function, then apply the `weekdays` function to determine the day of the week.  We then use the `ifelse` function to assign either "weekend" or "weekday" in the `weekday` factor variable.
 ```{R weekday,echo=TRUE}
-act_dow <- mutate(act_imp,dow=weekdays(as.Date(date,"%Y-%m-%d"))) %>% mutate(weekday=as.factor(ifelse(dow %in% c("Saturday","Sunday"),"weekend","weekday")))
+act_dow <- mutate(act_imp,dow=weekdays(as.Date(date,"%Y-%m-%d"))) %>% 
+        mutate(weekday=as.factor(ifelse(dow %in% c("Saturday","Sunday"),"weekend","weekday")))
 head(act_dow)
 ```
 
 ###Make a panel plot containing a time series plot of the 5-minute interval and the average number of steps taken, averaged across all weekday days or weekend days.
 First, we need to create our summary dataset using our new data with the `weekday` variable, using the same method as above.  We will create one dataset for weekend data:
 ```{R wkend_int, echo=TRUE}
-int_wkend <- filter(act_dow,weekday=="weekend") %>% group_by(interval) %>% na.omit() %>% summarize(avg_steps = mean(steps))
+int_wkend <- filter(act_dow,weekday=="weekend") %>% 
+        group_by(interval) %>% 
+        na.omit() %>% 
+        summarize(avg_steps = mean(steps))
 head(int_wkend)
 ```
 
 And another dataset for weekday data:
 ```{R wkday_int, echo=TRUE}
-int_wkday <- filter(act_dow,weekday=="weekday") %>% group_by(interval) %>% na.omit() %>% summarize(avg_steps = mean(steps))
+int_wkday <- filter(act_dow,weekday=="weekday") %>% 
+        group_by(interval) %>% 
+        na.omit() %>% 
+        summarize(avg_steps = mean(steps))
 head(int_wkday)
 ```
 
 Next, we will create our plot.  First, we will use the `par` function to set the `mfrow` attribute so we can have multiple panels.  Then we will create our two plots.
 ```{R plot_dow, echo=TRUE, fig.height=8}
 par(mfrow=c(2,1))
-with(int_wkday,plot(interval,avg_steps,main="Average Number of Steps Taken by Interval Across All Weekdays",xlab="Interval",ylab="Number of Steps",type="l"))
-with(int_wkend,plot(interval,avg_steps,main="Average Number of Steps Taken by Interval Across All Weekend Days",xlab="Interval",ylab="Number of Steps",type="l"))
+with(int_wkday,
+     plot(interval,avg_steps,
+          main="Average Number of Steps Taken by Interval Across All Weekdays",
+          xlab="Interval",
+          ylab="Number of Steps",
+          type="l"))
+with(int_wkend,
+     plot(interval,avg_steps,
+          main="Average Number of Steps Taken by Interval Across All Weekend Days",
+          xlab="Interval",
+          ylab="Number of Steps",
+          type="l"))
 ```
